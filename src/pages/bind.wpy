@@ -1,0 +1,229 @@
+<style scoped>
+
+.container {
+  width: 750rpx;
+  height: 100vh;
+  background-size: 100% 100%;
+  background-color: #ececec;
+  padding-top: 20rpx;
+  margin-top: -20rpx;
+}
+.page__title {
+  padding: 20rpx 30rpx;
+  text-align: center;
+}
+
+</style>
+
+
+<template>
+  <view class="container">
+    <view class="page__hd">
+        <view class="page__title">注册用户信息</view>
+    </view>
+    <view class="page__bd">
+      <view class="weui-cells weui-cells_after-title">
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+              <view class="weui-label import-item-color">姓名</view>
+          </view>
+          <view class="weui-cell__bd">
+              <input class="weui-input select-input-value"  placeholder="请输入用户名称" @input="inputUserName"/>
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+              <view class="weui-label">党支部</view>
+          </view>
+          <view class="weui-cell__bd">
+              <input class="weui-input select-input-value" value="{{branch}}"  @input="findHangye"/>
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input" @tap="selectSex">
+            <view class="weui-cell__hd">
+                <view class="weui-label">性别</view>
+            </view>
+            <view class="weui-cell__bd">
+                <input class="weui-input" value="{{sex ? '女' : '男'}}" disabled/>
+            </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+              <view class="weui-label">入党日期</view>
+          </view>
+          <view class="weui-cell__bd">
+            <picker mode="date" fields="year" value="{{joinDate}}" @change="bindDateChange">
+              <input class="weui-input" value="{{joinDate}}" placeholder="请选择得到入党日期" disabled/>
+            </picker>
+          </view>
+        </view>
+        <view class="weui-cell">
+          <view class="weui-cell__bd">
+            <view class="weui-uploader">
+              <view class="weui-uploader__hd">
+                <view class="weui-uploader__title">图片上传</view>
+              </view>
+              <view class="weui-uploader__bd">
+                <view wx:if="{{image == ''}}" class="weui-uploader__input-box">
+                    <view class="weui-uploader__input" @tap="chooseImage"></view>
+                </view>
+                <view wx:if="{{image != ''}}" class="weui-uploader__file" @tap="previewImage">
+                    <image class="weui-uploader__img" src="{{image}}" mode="aspectFill" />
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="weui-btn-area">
+      <button class="weui-btn" type="primary" @tap="postBind">提交</button>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import Api from '../util/api.js'
+
+  export default class bind extends wepy.page{
+    config = {
+      navigationBarTitleText: '',
+    }
+
+    data = {
+      sex: 0,
+      joinDate: '',
+      image: '',
+      openid: '',
+      userName: '',
+      belongBranchId: '1',
+      branch: '深圳市宝安区党群服务中心'
+    }
+
+    methods = {
+      inputUserName: function(e) {
+        this.userName = e.detail.value
+      },
+      selectSex: function(e) {
+        console.log(e)
+        let itemList = ['男', '女']
+        let self = this
+
+        wx.showActionSheet({
+          itemList: itemList,
+          success: function(res) {
+            // console.log(res)
+            if (!res.cancel) {
+              self.sex = res.tapIndex
+              self.$apply()
+            }
+          },
+          fail: function(res) {
+            console.log(res.errMsg)
+          }
+        })
+      },
+      bindDateChange: function(e) {
+        this.joinDate = e.detail.value
+      },
+      chooseImage: function (e) {
+        let that = this;
+        wx.chooseImage({
+          count: 1,
+          sizeType: ['original', 'compressed'], // 可以指定是原图还是压缩图，默认二者都有
+          sourceType: ['album', 'camera'], // 可以指定来源是相册还是相机，默认二者都有
+          success: function (res) {
+            // 返回选定照片的本地文件路径列表，tempFilePath可以作为img标签的src属性显示图片
+            console.log(res.tempFilePaths)
+            wepy.uploadFile({
+              url: Api.host + Api.uploadUserPhoto,
+              filePath: res.tempFilePaths[0],
+              name: 'image',
+            }).then(result => {
+              let image = JSON.parse(result.data)
+              if(image.code == 0) {
+                that.image = image.data
+                that.$apply()
+              } else {
+                wepy.showToast({
+                  title: image.msg,
+                  icon: 'none',
+                  duration: 2000
+                })
+              }
+            })
+          }
+        })
+      },
+      previewImage: function(e){
+        wx.previewImage({
+          current: e.currentTarget.id, // 当前显示图片的http链接
+          urls: this.data.files // 需要预览的图片http链接列表
+        })
+      },
+      postBind: function(e) {
+        wepy.showLoading({
+          title: '请稍候',
+        })
+        if(this.userName == '' || this.belongBranchId == '' || this.image == '' || this.joinDate == '') {
+          wepy.showToast({
+            title: '信息填写不完整，请填写',
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
+        const url = Api.host + Api.register
+        wepy.request({
+          url: url,
+          method: 'POST',
+          data: {
+            user_name: this.userName,
+            belong_branch_id: this.belongBranchId,
+            photo_filename: this.image,
+            join_year: this.joinDate,
+            open_id: this.openid,
+            sex: this.sex
+          },
+        }).then(res => {
+          wepy.hideLoading()
+          console.log(res)
+          if(res.data.code == 0) {
+            wepy.redirectTo({
+              url: 'newHome'
+            })
+          } else {
+            wepy.showToast({
+              title: '注册失败，请重试',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+        });
+      }
+    }
+
+    searchCollege(school) {
+      const url = Api.host + Api.searchCollege + '/' + school
+      console.log(url)
+      wepy.request({
+        url: url,
+      }).then(res => {
+        console.log(res.data)
+        if(res.data.code == 0 &&res.data.body.data.length > 0) {
+          this.showSearch = true
+          this.schoolList = res.data.body.data
+          this.$apply()
+        }
+      })
+    }
+
+    onLoad(options) {
+      if(options && options.openid) {
+        this.openid = options.openid
+      }
+    }
+  }
+</script>
+

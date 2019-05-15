@@ -1,0 +1,58 @@
+<style lang="less">
+  .container {
+    background-color: #ececec;
+    min-height: 100vh;
+  }
+  .userinfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .userinfo-avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+  }
+
+  .userinfo-nickname {
+    color: #aaa;
+  }
+
+  .no-video {
+    text-align:center;
+    height:100vh;
+    display:table-cell;
+    vertical-align:middle;
+    width:500rpx;
+    font-size:32rpx;
+    padding:0 125rpx;
+  }
+</style>
+<template>
+  <view class="container">
+    <view class="no-video">您没有个人视频，请通过移动党校终端重温入党誓词，生成个人视频</view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class Video extends wepy.page {
+    config = {
+      navigationBarTitleText: '入党宣誓'
+    }
+    components = {
+    }
+
+    data = {
+    }
+
+    methods = {
+
+    }
+
+    onLoad() {
+    }
+  }
+</script>

@@ -1,0 +1,316 @@
+<style lang="less">
+  .container {
+    background-color: #ffffff;
+    min-height: 100vh;
+  }
+  .video-title {
+    font-size: 40rpx;
+    font-weight: bold;
+    padding: 20rpx;
+  }
+  .video-box {
+    width: 750rpx;
+    height: 420rpx;
+    background-color: #000000;
+  }
+  .model-img{
+    width: 750rpx;
+    height: 420rpx;
+  }
+  .model-btn{
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      right:0;
+      margin:auto;
+      width:100rpx;
+      height:100rpx;
+      border-radius:50%;
+      background-color: rgba(0,0,0,.3);
+  }
+  .play-icon{
+      margin:28rpx 42rpx;
+      border-top:26rpx solid transparent;
+      border-left:36rpx solid #fff;
+      border-bottom:22rpx solid transparent;
+  }
+  .info-title {
+    color: #000000;
+    font-weight: 400;
+  }
+  .video-desc {
+    padding: 20rpx;
+    font-size: 30rpx;
+    color: #808080;
+    line-height: 40rpx;
+    font-weight: 200;
+  }
+
+  .bottom-button-box {
+    position: fixed;
+    height: 100rpx;
+    bottom: 0;
+    left: 0;
+    width: 750rpx;
+    z-index: 100;
+    display: flex;
+    border-top: #C0C0C0 2rpx solid;
+  }
+
+  .bottom-button {
+    width: 375rpx;
+    padding: 20rpx;
+    text-align:center;
+    display: flex;
+    justify-content: center;
+  }
+
+  .bottom-button-img {
+    width: 60rpx;
+    height: 60rpx;
+  }
+  .bottom-button-name{
+    line-height: 60rpx;
+    padding-left: 10rpx;
+  }
+  button {
+    background-color: #ffffff;
+  }
+  button::after{
+    border: none;
+  }
+
+  .canvas-box{
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+  }
+  .canvas {
+    position: fixed;
+    left: 15%;
+    top: 10%;
+    width: calc(750rpx * 0.7);
+    height: calc(100vh * 0.7);
+    background-color: #ffffff;
+    border-radius: 10rpx;
+  }
+  .save-image-button {
+    position: fixed;
+    left: 250rpx;
+    bottom: 10%;
+    width: 250rpx;
+    height: 80rpx;
+    background-color: #dd7777;
+    border-radius: 40rpx;
+    line-height: 80rpx;
+    text-align: center;
+    color: #ffffff;
+  }
+</style>
+<template>
+  <view class="container">
+    <!-- <view class="no-video">您没有个人视频，请通过移动党校终端重温入党誓词，生成个人视频</view> -->
+    <view>
+      <video wx:if="{{!isDrawImage}}" class="video-box" poster="{{coverUrl}}" src="{{videoUrl}}" binderror="videoErrorCallback"></video>
+      <view wx:else class="video-box">
+        <image class="model-img" mode="aspectFit" src="{{coverUrl}}"></image>
+        <view class="model-btn">
+          <view class="play-icon"></view>
+        </view>
+      </view>
+      <scroll-view scroll-y style="height: calc(100vh - 550rpx);">
+        <view class="video-title">{{videoTitle}}</view>
+        <view class="video-desc">
+          <view class="info-title">含义解释：</view>
+          <text space="emsp">{{videoDesc}}</text>
+          <!-- <text>{{videoReview}}</text> -->
+        </view>
+        <view class="video-desc">
+          <view class="info-title">专家点评：</view>
+          <text space="emsp">{{videoReview}}</text>
+          <!-- <text>{{videoReview}}</text> -->
+        </view>
+        <view class="video-desc">
+          <view class="info-title">如何实践：</view>
+          <text space="emsp">{{videoHowDo}}</text>
+          <!-- <text>{{videoReview}}</text> -->
+        </view>
+      </scroll-view>
+      <view class="bottom-button-box">
+        <view class="bottom-button">
+          <image class="bottom-button-img" src="../images/fenxiang.png"/>
+          <button open-type="share" class="bottom-button-name" hover-class="background-color: #ffffff;">分享好友</button>
+        </view>
+        <view class="bottom-button" @tap="shareToPYQ">
+          <image class="bottom-button-img" src="../images/pengyouquan.png"/>
+          <button class="bottom-button-name" hover-class="background-color: #ffffff;">截图发文</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="canvas-box" wx:if="{{isDrawImage}}" @tap="stopDrawImage">
+    <canvas class="canvas" canvas-id="myCanvas"></canvas>
+    <view class="save-image-button" @tap.stop="saveDrawImage">保存图片</view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class Video extends wepy.page {
+    config = {
+      navigationBarTitleText: '党课学习'
+    }
+
+    data = {
+      isDrawImage: false,
+      videoUrl: 'http://183.6.222.76/6571E58CEE54B73DD47872E2F/0300200100551140E16CB100163C3C37DEF368-71FC-A6F4-05EB-520303BDE572.mp4?ccode=0502&duration=12573&expire=18000&psid=3db2768c732d39ee680a39c0268b0249&sp=&ups_client_netip=b72f0243&ups_ts=1533611669&ups_userid=&utid=PxamE4OjVlUCAbcvAkO6LOH3&vid=XMjg2NDI3MDM3Ng%3D%3D&vkey=B7fb793aef3f2482d156157ccf35f8394',
+      coverUrl: 'http://image14.m1905.cn/uploadfile/2016/0802/thumb_1_119_62_20160802102305650544.png',
+      videoTitle: '大决战三',
+      videoDesc: '  解放战争时期，中国人民解放军东北野战军和华北军区部队将国民党军傅作义集团抑留于北平、天津、张家口地区，予以各个歼灭的战略决战性战役，是解放战争具有决定意义的三大战役之一。平林彪、罗荣桓、聂荣臻、刘亚楼指挥中国人民解放军东北野战军和华北军区部队共100万大军，以伤亡3.9万人的代价，消灭及改编中华民国国军3个兵团，解放了北平、天津在内的华北大片地区。这一伟大胜利，是军事打击和政治争取相结合的结果。',
+      videoReview: '  65年前，在东起山海关西至张家口长达500多公里的战线上，中国共产党人发起了决定中国前途与命运的平津战役。毛泽东等老一辈无产阶级革命家指挥我东北野战军、华北军区百万将士，一举歼灭和改编国民党军52万余人，从根本上动摇了国民党的反动统治（中共广东省委党史研究室—红广角）',
+      videoHowDo: '  广大党员干部需要主动来一场“学习的革命”，让学党章、守党纪成为一种习惯，让学、用习近平总书记系列重要讲话精神切实转化为一种内在需要和工作源动力，真正做到内化于心、外化于行',
+      shareImage: '',
+      tempFilePath: '',
+    }
+
+    methods = {
+      videoErrorCallback: function(e) {
+        wepy.showToast({
+          title: '视频加载错误，请联系客服',
+          icon: 'none',
+          duration: 2000
+        })
+      },
+      shareToPYQ: function() {
+        this.isDrawImage = true;
+        wepy.showLoading({
+          title: '正在生成图片...',
+          mask: true,
+        });
+        wepy.downloadFile({
+          url: this.coverUrl
+        }).then(res => {
+          console.log(res)
+          if(res.statusCode == 200) {
+            this.tempFilePath = res.tempFilePath
+            this.drawImage()
+          } else {
+            this.isDrawImage = false;
+            wepy.hideLoading();
+            wepy.showToast({
+              title: '生成分享图片失败，请重试',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+        })
+      },
+      stopDrawImage: function() {
+        this.isDrawImage = false
+      },
+      saveDrawImage: function() {
+        wx.canvasToTempFilePath({
+          x: 0,
+          y: 0,
+          canvasId: 'myCanvas',
+          success: function (res) {
+            console.log('朋友圈分享图生成成功:' + res.tempFilePath)
+            wepy.previewImage({
+                current: res.tempFilePath, // 当前显示图片的http链接
+                urls: [res.tempFilePath] // 需要预览的图片http链接列表
+            })
+          },
+          fail: function (err) {
+            wepy.showToast({
+              title: '生成分享图片失败，请重试',
+              icon: 'none',
+              duration: 2000
+            })
+            console.log('失败')
+            console.log(err)
+          }
+        })
+      }
+    }
+
+    drawImage() {
+
+      const ctx = wx.createCanvasContext('myCanvas')
+      const qrPath = '../images/qrcode.jpeg'
+      const windowWidth = wx.getSystemInfoSync().windowWidth * 0.7
+      const windowHeight = wx.getSystemInfoSync().windowHeight * 0.7
+
+      let yOffset = windowHeight * 0.12
+      // 设置背景色为白色
+      ctx.setFillStyle('White')
+      ctx.fillRect(0, 0, windowWidth, windowHeight)
+
+      //绘制第一段文本
+      let titleArray = [];
+      //为了防止标题过长，分割字符串,每行18个
+      for (let i = 0; i < this.videoTitle.length / 12; i++) {
+          if (i > 2) {
+              break;
+          }
+          titleArray.push(this.videoTitle.substr(i * 12, 12));
+      }
+      titleArray.forEach(function (value) {
+          ctx.setFillStyle('#000000')
+          ctx.setFontSize(windowWidth / 12)
+          ctx.setTextAlign('left')
+          ctx.fillText(value,  windowWidth / 24, yOffset)
+          yOffset += windowHeight * 0.06
+      });
+
+      yOffset += windowHeight * 0.05
+
+
+      //绘制二维码
+      ctx.drawImage(qrPath,windowWidth * 0.6, yOffset, windowWidth *0.4, windowWidth *0.4)
+
+      //绘制第二段文本
+      let descArray = [];
+      //为了防止标题过长，分割字符串,每行18个
+      for (let i = 0; i < this.videoDesc.length / 11; i++) {
+          if (i > 5) {
+            descArray.push(this.videoDesc.substr(i * 11, 10) + '...');
+            break;
+          }
+          descArray.push(this.videoDesc.substr(i * 11, 11));
+      }
+
+      descArray.forEach(function (value) {
+        ctx.setFillStyle('#808080')
+        ctx.setFontSize(windowWidth / 20)
+        ctx.setTextAlign('left')
+        ctx.fillText(value, windowWidth / 32, yOffset)
+        yOffset += windowHeight * 0.05
+      });
+
+      //绘制视频封面图
+      ctx.drawImage(this.tempFilePath, windowWidth / 32, yOffset, windowWidth * 15 / 16, windowWidth / 2)
+      ctx.draw();
+      wepy.hideLoading();
+    }
+
+    onShareAppMessage(res) {
+      console.log(res)
+      return {
+        title: this.videoTitle,
+        path: '/page/dangke'
+      }
+    }
+
+
+    onLoad() {
+
+    }
+  }
+</script>

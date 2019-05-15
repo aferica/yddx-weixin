@@ -1,0 +1,92 @@
+<style scoped>
+.content-font {
+  font-size: 36rpx;
+}
+.not-import {
+  color: #80848f;
+  font-size: 30rpx;
+}
+</style>
+
+
+<template>
+  <view  class="container">
+    <view wx:if="{{newsDetail}}">
+      <view class="page">
+          <view class="page__bd">
+              <view class="weui-article">
+                  <view class="weui-article__h1" style="font-size: 42rpx">{{newsDetail.title}}</view>
+                  <view class="weui-article__section">
+                      <view class="weui-article__section">
+                          <view class="weui-article__p content-font">
+                            <text selectable>
+                              {{newsDetail.content}}
+                            </text>
+                          </view>
+                          <view class="weui-article__p">
+                            <repeat for="{{imageList}}" index="index" item="item">
+                              <image wx:if="{{index != imageList.length - 1}}" class="weui-article__img" src="{{'https://yddx-news-1256926653.cos.ap-guangzhou.myqcloud.com' + item}}" mode="widthFix" style="width: 100%" />
+                            </repeat>
+                          </view>
+                      </view>
+                  </view>
+                  <view class="weui-article__title not-import">来源网：{{newsDetail.source_name}}</view>
+                  <view class="weui-article__title not-import">来源地址：{{newsDetail.source_url}}</view>
+              </view>
+          </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import Api from '../../util/api.js'
+
+  export default class NewsList extends wepy.page{
+
+    data = {
+      isLoading: true,
+      newsDetail: {},
+      imageList: []
+    }
+
+    methods = {
+      goToPage: (url) => {
+        wepy.navigateTo({
+          url: url,
+        })
+      },
+      setting: function() {
+        console.log('filePath')
+      },
+    }
+
+    getNewsDetail(id) {
+      const url = Api.host + Api.getNewsDetail + '?id=' + id
+
+      wepy.request({
+        url: url,
+      }).then(res => {
+        console.log(res.data)
+        this.isLoading = false
+        if(res.data.code == 0) {
+          res.data.data.content = '\u3000\u3000' + res.data.data.content.replace(/\n/g, '\n\u3000\u3000')
+          this.newsDetail = res.data.data
+          this.imageList = res.data.data.images.split(';')
+        }
+        this.$apply()
+      })
+    }
+
+    onLoad(options) {
+      console.log(options)
+      this.type = options.type
+      wepy.setNavigationBarTitle({
+        title: options.title
+      })
+      this.getNewsDetail(options.id)
+    }
+  }
+</script>
+

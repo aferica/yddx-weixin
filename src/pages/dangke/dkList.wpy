@@ -1,0 +1,81 @@
+<style scoped>
+  .container {
+    background-color: #ececec;
+    min-height: 100vh;
+  }
+
+  .video-box {
+    width: 750rpx;
+    height: 420rpx;
+    background-color: #000000;
+  }
+
+</style>
+
+
+<template>
+  <view  class="container">
+    <view wx:if="{{isLoading && videosList.length == 0}}" class="empty-info">
+
+    </view>
+    <view wx:else>
+      <repeat for="{{videosList}}" index="index" item="item">
+      <view class="weui-panel">
+        <view class="weui-panel__bd">
+          <video class="video-box" src="{{item.url}}" binderror="videoErrorCallback"></video>
+          <view>{{item.name}}</view>
+        </view>
+      </view>
+      </repeat>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import Api from '../../util/api.js'
+
+  export default class DkList extends wepy.page{
+
+    data = {
+      isLoading: true,
+      page: 1,
+      type: '',
+      videosList: []
+    }
+
+    methods = {
+    }
+
+    getNewsByType() {
+      const url = Api.host + Api.getVideosByType + '?type=' + this.type + '&page=' + this.page
+      // const url = Api.host + Api.getNewsByType + '?page=' + this.page
+
+      wepy.request({
+        url: url,
+      }).then(res => {
+        console.log(res.data)
+        this.isLoading = false
+        if(res.data.code == 0) {
+          let result = this.videosList.concat(res.data.data)
+          this.videosList = result
+        }
+        this.$apply()
+      })
+    }
+
+    onReachBottom () {
+      this.page = this.page + 1
+      this.getNewsByType()
+    }
+    onLoad(options) {
+      console.log(options)
+      this.type = options.type
+      wepy.setNavigationBarTitle({
+        title: options.title
+      })
+      this.getNewsByType()
+    }
+  }
+</script>
+

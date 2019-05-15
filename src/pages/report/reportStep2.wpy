@@ -1,0 +1,185 @@
+<style lang="less">
+  .container {
+    height: 100vh;
+  }
+
+  .report_bg {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .step2-bg {
+    width:130%;
+    height:30%;
+    position:fixed;
+    top:-10%;
+    left:-15%;
+    z-index: 10;
+  }
+
+  .step2-title {
+    position: fixed;
+    right: 100rpx;
+    width: 750rpx;
+    height: 60rpx;
+    top: 10%;
+    left: 0;
+    z-index: 20;
+    line-height: 40rpx;
+    color: #cc3333;
+    font-weight: bolder;
+    text-align: center;
+  }
+
+  .step2-radar-chart {
+    position: fixed;
+    top: 25%;
+    left: 0;
+    width: 100%;
+    height: 250px;
+  }
+  .canvas {
+    left: 10%;
+    width: 600rpx;
+    height: ceil( 600rpx / 3 * 2);
+  }
+  .step2-bottom-info-box {
+    width: 30%;
+    height: 25%;
+    bottom: 5%;
+    position: fixed;
+    background-color: #e65454;
+    padding:10rpx 20rpx 10rpx 20rpx;
+
+  }
+  .step2-bottom-info-box-left {
+    left: 10%;
+  }
+  .step2-bottom-info-box-right {
+    right: 10%;
+  }
+  .step2-bottom-info-font-title {
+    font-size: 38rpx;
+    color: #ffffff;
+    font-weight: bolder;
+    line-height: 45rpx;
+  }
+  .step2-bottom-info-font {
+    font-size: 32rpx;
+    color: #ffffff;
+    font-weight: bolder;
+    line-height: 50rpx;
+  }
+  .line {
+    box-sizing: border-box;
+    border-bottom: 4rpx #fff solid;
+  }
+</style>
+<template>
+  <view class="container"  @tap="gotoResult">
+    <image class="report_bg" src="../../images/report_bg.jpg"/>
+    <image class="step2-bg" src="../../images/step2_bg.png"/>
+    <view class="step2-title">
+      ②党建学习涵盖范围
+    </view>
+    <view class="step2-radar-chart">
+      <canvas canvas-id="radarCanvas" class="canvas"></canvas>
+    </view>
+    <view class="step2-bottom-info-box step2-bottom-info-box-left">
+      <view class="step2-bottom-info-font-title">本次学习</view>
+      <view class="step2-bottom-info-font-title line">涵盖领域</view>
+      <repeat for="{{thisTimeStudy}}" index="index" item="item">
+        <view class="step2-bottom-info-font">{{item}}</view>
+      </repeat>
+    </view>
+    <view class="step2-bottom-info-box step2-bottom-info-box-right">
+      <view class="step2-bottom-info-font-title">下次学习</view>
+      <view class="step2-bottom-info-font-title line">需涵盖领域</view>
+      <repeat for="{{nextTimeStudy}}" index="index" item="item">
+        <view class="step2-bottom-info-font">{{item}}</view>
+      </repeat>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import wxCharts from '../../util/wx-charts-min.js'
+
+  let radarChart = null
+
+  export default class ReportStep2 extends wepy.page {
+    config = {
+      navigationBarTitleText: '学习范围'
+    }
+    components = {
+    }
+
+    data = {
+      thisTimeStudy: ['党史', '时政', '行政能力'],
+      nextTimeStudy: ['行政素养', '党史']
+    }
+
+    methods = {
+      gotoResult: function () {
+        wepy.navigateTo({
+          url: './reportResult'
+        })
+      }
+    }
+
+    onLoad() {
+
+      let reportInfo = this.$parent.globalData.reportInfo
+      // console.log(reportInfo.rank)
+      if(reportInfo.rank.length == 0) {
+        this.thisTimeStudy = ['无']
+        this.nextTimeStudy = ['党史', '时政', '行政能力', '...']
+      } else {
+        this.thisTimeStudy = reportInfo.rank.slice(0, 3)
+        this.nextTimeStudy = reportInfo.rank.slice(3, 5)
+      }
+      this.$apply()
+      let windowWidth = 320;
+      try {
+          let res = wx.getSystemInfoSync();
+          windowWidth = res.windowWidth;
+      } catch (e) {
+          console.error('getSystemInfoSync failed!');
+      }
+
+      radarChart = new wxCharts({
+          canvasId: 'radarCanvas',
+          type: 'radar',
+          categories: ['党性修养', '时政', '行政能力', '行政素养', '党史'],
+          series: [{
+              name: '学习分布图',
+              data: [
+                reportInfo.type_1,
+                reportInfo.type_2,
+                reportInfo.type_3,
+                reportInfo.type_4,
+                reportInfo.type_5
+              ],
+              color: '#cc3333'
+          }],
+          width: windowWidth * 0.8,
+          height: windowWidth * 0.8 / 3 * 2,
+          extra: {
+              radar: {
+                  labelColor: '#cc3333'
+              },
+              legendTextColor: '#cc3333'
+          }
+      });
+
+    }
+
+
+  }
+</script>

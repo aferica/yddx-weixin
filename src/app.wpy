@@ -1,0 +1,131 @@
+<style lang="less">
+@import './weui.wxss';
+
+.container {
+  width: 750rpx;
+}
+</style>
+
+<script>
+import wepy from 'wepy'
+import 'wepy-async-function'
+
+var env = 'dev';
+env = 'prod';
+if (env === 'prod') {
+  console.log = () => {};
+  console.info = () => {};
+}
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      'pages/newHome',
+      'pages/home',
+      'pages/bind',
+      'pages/report/report',
+      'pages/report/reportStep1',
+      'pages/report/reportStep2',
+      'pages/report/reportResult',
+      'pages/video',
+      'pages/dangke',
+      'pages/news/newsHome',
+      'pages/news/newsList',
+      'pages/news/newsDetail',
+      'pages/dangke/dkHome',
+      'pages/dangke/dkList'
+    ],
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#dd7777',
+      navigationBarTitleText: 'WeChat',
+      navigationBarTextStyle: 'white'
+    },
+    // tabBar: {
+    //   color: '#707070',
+    //   selectedColor: '#dd7777',
+    //   list: [
+    //     {
+    //       iconPath: './images/user-o.png',
+    //       selectedIconPath: './images/user.png',
+    //       pagePath: 'pages/home',
+    //       text: '主页'
+    //     },
+    //     {
+    //       iconPath: './images/service-o.png',
+    //       selectedIconPath: './images/service.png',
+    //       pagePath: 'pages/report/report',
+    //       text: '个人报告'
+    //     },
+    //     {
+    //       iconPath: './images/video-un.png',
+    //       selectedIconPath: './images/video.png',
+    //       pagePath: 'pages/video',
+    //       text: '个人视频'
+    //     }
+    //   ]
+    // }
+  }
+
+  globalData = {
+    userInfo: null,
+    isBind: false,
+    reportInfo: null,
+  }
+
+  constructor () {
+    super()
+    this.use('requestfix');
+    this.use('promisify');
+
+    // 配置拦截器
+    this.intercept('request', {
+      config(p) {
+        console.log("拦截config:", p);
+        p.header = { 'content-type': "application/json;charset=UTF-8"} ;
+        return p;
+      },
+      success(p) {
+        //
+        let pages = getCurrentPages();
+        console.log("拦截success:", p);
+        return p;
+      },
+      fail(p) {
+
+        return p;
+      }
+    })
+  }
+
+  onLaunch() {
+    this.testAsync()
+  }
+
+  sleep (s) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve('promise resolved')
+      }, s * 1000)
+    })
+  }
+
+  async testAsync () {
+    const data = await this.sleep(3)
+    console.log(data)
+  }
+
+  getUserInfo(cb) {
+    const that = this
+    if (this.globalData.userInfo) {
+      return this.globalData.userInfo
+    }
+    wepy.getUserInfo({
+      success (res) {
+        that.globalData.userInfo = res.userInfo
+        cb && cb(res.userInfo)
+      }
+    })
+  }
+}
+</script>

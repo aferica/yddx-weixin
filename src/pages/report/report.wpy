@@ -1,0 +1,151 @@
+<style lang="less">
+  .container {
+    height: 100vh;
+  }
+
+  .report_bg {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .report-title {
+    z-index: 100;
+    font-family: 'SimHei', 'STXihei';
+    color: #ffffff;
+    position:fixed;
+    left:10%;
+    right:10%;
+    position:fixed;
+    width:80%;
+    top: 25%;
+    text-align: center;
+  }
+
+  .report-title-main{
+    font-size: 40rpx;
+    padding: 0 10%;
+    box-sizing: border-box;
+    border-bottom: 2rpx #fff solid;
+    line-height: 60rpx;
+  }
+  .report-title-person{
+    font-size: 50rpx;
+    line-height: 80rpx;
+    font-weight: bolder;
+  }
+  .report-other {
+    z-index: 100;
+    color: #DCDCDC;
+    position:fixed;
+    left:10%;
+    right:10%;
+    position:fixed;
+    width:80%;
+    bottom: 10%;
+    font-size: 24rpx;
+    text-align: center;
+  }
+  .report-other-import {
+    color: #ffffff;
+    font-weight: bolder;
+  }
+  .flex-item {
+    display: flex;
+    justify-content:center;
+  }
+</style>
+<template>
+  <view class="container" @tap="gotoStep1">
+    <image class="report_bg" src="../../images/report_cover.jpg"/>
+    <view class="report-title">
+      <view class="report-title-main">
+        深圳市宝安区党群服务中心
+      </view>
+      <view class="report-title-person" style="padding-top: 20rpx;">
+        {{userInfo.user_name}}同志
+      </view>
+      <view class="report-title-person">
+        党建体验报告
+      </view>
+    </view>
+    <view class="report-other">
+      <view class="flex-item">
+        本报告生成于
+        <view class="report-other-import">2018年6月7日18点01分</view>
+      </view>
+      <view>
+        <view class="report-other-import">{{userInfo.branch_name}}</view>
+      </view>
+      <view class="flex-item">
+        本次数据已纳入本月
+        <view class="report-other-import">《深圳市宝安区党建大数据》</view>
+        计算
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import Api from '../../util/api.js'
+
+  export default class Report extends wepy.page {
+    config = {
+      navigationBarTitleText: '个人报告'
+    }
+    components = {
+    }
+
+    data = {
+      userInfo: null
+    }
+
+    methods = {
+      gotoStep1: function () {
+        wepy.navigateTo({
+          url: './reportStep1'
+        })
+      }
+    }
+
+    getReportInfo() {
+      const url = Api.host + Api.getReport + this.userInfo.user_id
+      // const url = Api.host + Api.getReport + '11'
+
+      wepy.request({
+        url: url,
+      }).then(res => {
+        console.log(res.data)
+        wepy.hideLoading()
+        if(res.data.code == 0) {
+          this.$parent.globalData.reportInfo = res.data.data
+        } else {
+          wepy.showToast({
+            title: '获取报告信息失败，将返回主页',
+            icon: 'none',
+            duration: 2000
+          })
+          wepy.navigateBack({
+            delta: 1
+          })
+        }
+      })
+    }
+
+    onLoad() {
+      if(this.$parent.globalData.userInfo) {
+        wepy.showLoading({
+          title: '加载中',
+          mask: true
+        })
+        this.userInfo = this.$parent.globalData.userInfo
+        this.getReportInfo()
+      }
+    }
+  }
+</script>

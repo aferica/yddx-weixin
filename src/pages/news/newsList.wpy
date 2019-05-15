@@ -1,0 +1,90 @@
+<style scoped>
+  .container {
+    background-color: #ececec;
+    min-height: 100vh;
+  }
+
+
+
+</style>
+
+
+<template>
+  <view  class="container">
+    <view wx:if="{{isLoading && newsList.length == 0}}" class="empty-info">
+
+    </view>
+    <view wx:else>
+      <repeat for="{{newsList}}" index="index" item="item">
+      <view class="weui-panel">
+        <view class="weui-panel__bd" @tap="goToDetail({{item}})">
+          <view class="weui-media-box weui-media-box_text">
+              <view class="weui-media-box__title weui-media-box__title_in-text">{{item.title}}</view>
+              <view class="weui-media-box__info">
+                  <view class="weui-media-box__info__meta">{{item.source_name}}</view>
+                  <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">{{item.create_time}}</view>
+              </view>
+          </view>
+        </view>
+      </view>
+      </repeat>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import Api from '../../util/api.js'
+
+  export default class NewsList extends wepy.page{
+
+    data = {
+      isLoading: true,
+      page: 1,
+      type: '',
+      newsList: []
+    }
+
+    methods = {
+      goToDetail: (item) => {
+        wepy.navigateTo({
+          url: './newsDetail?id=' + item.id + '&title=' + item.title,
+        })
+      }
+    }
+
+    getNewsByType() {
+      const url = Api.host + Api.getNewsByType + '?type=' + this.type + '&page=' + this.page
+      // const url = Api.host + Api.getNewsByType + '?page=' + this.page
+
+      wepy.request({
+        url: url,
+      }).then(res => {
+        console.log(res.data)
+        this.isLoading = false
+        if(res.data.code == 0) {
+          for(let item of res.data.data) {
+            item.create_time = item.create_time.slice(0, 10)
+          }
+          let result = this.newsList.concat(res.data.data)
+          this.newsList = result
+        }
+        this.$apply()
+      })
+    }
+
+    onReachBottom () {
+      this.page = this.page + 1
+      this.getNewsByType()
+    }
+    onLoad(options) {
+      console.log(options)
+      this.type = options.type
+      wepy.setNavigationBarTitle({
+        title: options.title
+      })
+      this.getNewsByType()
+    }
+  }
+</script>
+

@@ -1,0 +1,379 @@
+<style>
+  .container {
+    height: 100vh;
+  }
+
+  .report-result-bg {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .result-bg {
+    width:95%;
+    height:60%;
+    position:fixed;
+    top:20%;
+    left:10%;
+    z-index: 10;
+  }
+
+  .report-result-title-box {
+    width:180rpx;
+    height:240rpx;
+    position:fixed;
+    top: calc(50vh - 120rpx);
+    left: 0;
+    z-index: 20;
+    background-color: #e65454;
+  }
+  .report-result-title {
+    text-align:center;
+    color: #fff;
+    font-size: 56rpx;
+    font-weight: bolder;
+    font-family: 'SimHei', 'STXihei';
+    line-height: 80rpx;
+  }
+
+  .report-result-content {
+    height:60%;
+    position:fixed;
+    top: 15%;
+    left: 220rpx;
+    right: 60rpx;
+    z-index: 100;
+    font-size: 28rpx;
+    font-weight: bold;
+  }
+  text {
+    display: table-cell;
+    vertical-align: middle;
+    height: 500rpx;
+  }
+  .bottom-button-box {
+    height:60rpx;
+    position:fixed;
+    bottom: 5%;
+    left: 150rpx;
+    right: 150rpx;
+    z-index: 100;
+    text-align:center;
+    display: flex;
+  }
+  .bottom-button {
+    background-color: #e65454;
+    font-size: 32rpx;
+    color: #fff;
+    line-height: 60rpx;
+    width: 200rpx;
+    position:fixed;
+  }
+  .go-back-Home-button {
+    left: 150rpx;
+  }
+  .share-button {
+    right:150rpx;
+  }
+
+  .canvas-box{
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+  }
+  .canvas {
+    position: fixed;
+    left: 5%;
+    top: 5%;
+    width: calc(750rpx * 0.9);
+    height: calc(100vh * 0.8);
+    background-color: #ffffff;
+    border-radius: 10rpx;
+  }
+  .save-image-button {
+    position: fixed;
+    left: 250rpx;
+    bottom: 5%;
+    width: 250rpx;
+    height: 80rpx;
+    background-color: #dd7777;
+    border-radius: 40rpx;
+    line-height: 80rpx;
+    text-align: center;
+    color: #ffffff;
+  }
+</style>
+<template>
+  <view class="container">
+    <image class="report-result-bg" src="../../images/report_bg.jpg"/>
+    <image class="result-bg" src="../../images/result_bg.png"/>
+    <view class="report-result-title-box">
+      <view class="report-result-title" style="padding-top: 40rpx">评</view>
+      <view class="report-result-title">语</view>
+    </view>
+    <view class="report-result-content">
+      <text space="nbsp">
+        {{resultContentL}}
+      </text>
+    </view>
+    <view class="bottom-button-box">
+      <view class="go-back-Home-button bottom-button" @tap="gobackToHome">
+        返回首页
+      </view>
+      <view class="share-button bottom-button" @tap="saveAndShare">
+        分享战绩
+      </view>
+    </view>
+  </view>
+
+  <view class="canvas-box" wx:if="{{isDrawImage}}" @tap="stopDrawImage">
+    <canvas class="canvas" canvas-id="myCanvas"></canvas>
+    <view class="save-image-button" @tap.stop="saveDrawImage">保存图片</view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class ReportResult extends wepy.page {
+    config = {
+      navigationBarTitleText: '学习评语'
+    }
+    components = {
+    }
+
+    data = {
+      resultContentL: '',
+      isDrawImage: false,
+      userInfo: null,
+      reportInfo: null,
+      tempFilePath: '',
+      test: 0
+    }
+
+    methods = {
+      gobackToHome: function () {
+        wepy.navigateBack({
+          delta: 4
+        })
+      },
+      saveAndShare: function () {
+        this.isDrawImage = true;
+        wepy.showLoading({
+          title: '正在生成图片...',
+          mask: true,
+        });
+        wepy.downloadFile({
+          url: this.userInfo.photo_filename
+        }).then(res => {
+          console.log(res)
+          if(res.statusCode == 200) {
+            this.tempFilePath = res.tempFilePath
+            this.drawImage()
+          } else {
+            this.isDrawImage = false;
+            wepy.hideLoading();
+            wepy.showToast({
+              title: '生成分享图片失败，请重试',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+        })
+      },
+      saveDrawImage: function() {
+        wx.canvasToTempFilePath({
+          x: 0,
+          y: 0,
+          canvasId: 'myCanvas',
+          success: function (res) {
+            console.log('朋友圈分享图生成成功:' + res.tempFilePath)
+            wepy.previewImage({
+                current: res.tempFilePath, // 当前显示图片的http链接
+                urls: [res.tempFilePath] // 需要预览的图片http链接列表
+            })
+          },
+          fail: function (err) {
+            wepy.showToast({
+              title: '生成分享图片失败，请重试',
+              icon: 'none',
+              duration: 2000
+            })
+            console.log('失败')
+            console.log(err)
+          }
+        })
+      }
+    }
+
+    drawImage() {
+      let oneOfMax = 0;
+
+      if(this.reportInfo.rank.length > 0) {
+        console.log(this.reportInfo.rank[0])
+        if(this.reportInfo.rank[0]=='党性修养') {
+          oneOfMax = 1 / this.reportInfo.type_1
+        } else if(this.reportInfo.rank[0]=='时政') {
+          oneOfMax = 1 / this.reportInfo.type_2
+        } else if(this.reportInfo.rank[0]=='行政能力') {
+          oneOfMax = 1 / this.reportInfo.type_3
+        } else if(this.reportInfo.rank[0]=='行政素养') {
+          oneOfMax = 1 / this.reportInfo.type_4
+        } else if(this.reportInfo.rank[0]=='党史') {
+          oneOfMax = 1 / this.reportInfo.type_5
+        }
+      console.log(oneOfMax)
+      }
+      console.log(oneOfMax)
+
+      const ctx = wx.createCanvasContext('myCanvas')
+      const qrPath = '../../images/qrcode.jpeg'
+      const windowWidth = wx.getSystemInfoSync().windowWidth * 0.9
+      const windowHeight = wx.getSystemInfoSync().windowHeight * 0.8
+
+      let yOffset = windowHeight * 0.12
+      // 设置背景色为白色
+      ctx.setFillStyle('White')
+      ctx.fillRect(0, 0, windowWidth, windowHeight)
+
+      //绘制二维码
+      ctx.drawImage(qrPath,windowWidth * 0.65, windowWidth * 0.05, windowWidth * 0.3, windowWidth * 0.3)
+
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(24)
+      ctx.setTextAlign('left')
+      ctx.fillText('学习报告',  windowWidth / 32, yOffset)
+      yOffset += windowHeight * 0.06
+
+      //绘制用户信息
+      //绘制用户头像
+      // ctx.save();
+      // ctx.beginPath();
+      // ctx.arc(windowWidth * 0.1 + 5, windowWidth * 0.1 + yOffset, windowWidth * 0.1, 0, Math.PI * 2, false);
+      // ctx.clip();//画好了圆 剪切  原始画布中剪切任意形状和尺寸。一旦剪切了某个区域，则所有之后的绘图都会被限制在被剪切的区域内 这也是我们要save上下文的原因
+      ctx.drawImage(this.tempFilePath, windowWidth / 32, yOffset, windowWidth * 0.2, windowWidth * 0.2)
+      // ctx.restore()
+
+      yOffset += windowHeight * 0.05
+      //绘制用户姓名
+      ctx.setFillStyle('#e65454')
+      ctx.setFontSize(windowWidth / 30)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.userInfo.user_name,  windowWidth * 0.2 + windowWidth / 16, yOffset)
+      yOffset += windowHeight * 0.06
+      //绘制用户党支部
+      ctx.setFillStyle('#e65454')
+      ctx.setFontSize(windowWidth / 30)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.userInfo.branch_name,  windowWidth * 0.2 + windowWidth / 16, yOffset)
+
+
+      yOffset += windowHeight * 0.15
+
+      //绘制数据
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText('党性修养', windowWidth / 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      ctx.fillRect(windowWidth * 0.2 + windowWidth / 30, yOffset - windowHeight * 0.04, 1 + windowWidth * 0.6 * this.reportInfo.type_1 * oneOfMax, windowHeight * 0.06)
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.reportInfo.type_1, windowWidth - 30, yOffset)
+      ctx.setFillStyle('#e65454')
+
+      yOffset += windowHeight * 0.08
+
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText('时政', windowWidth / 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      ctx.fillRect(windowWidth * 0.2 + windowWidth / 30, yOffset - windowHeight * 0.04, 1 + windowWidth * 0.6 * this.reportInfo.type_2 * oneOfMax, windowHeight * 0.06)
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.reportInfo.type_2, windowWidth - 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      yOffset += windowHeight * 0.08
+
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText('行政能力', windowWidth / 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      ctx.fillRect(windowWidth * 0.2 + windowWidth / 30, yOffset - windowHeight * 0.04, 1 + windowWidth * 0.6 * this.reportInfo.type_3 * oneOfMax, windowHeight * 0.06)
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.reportInfo.type_3, windowWidth - 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      yOffset += windowHeight * 0.08
+
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText('行政素养', windowWidth / 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      ctx.fillRect(windowWidth * 0.2 + windowWidth / 30, yOffset - windowHeight * 0.04, 1 + windowWidth * 0.6 * this.reportInfo.type_4 * oneOfMax, windowHeight * 0.06)
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.reportInfo.type_4, windowWidth - 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      yOffset += windowHeight * 0.08
+
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText('党史', windowWidth / 30, yOffset)
+      ctx.setFillStyle('#e65454')
+      ctx.fillRect(windowWidth * 0.2 + windowWidth / 30, yOffset - windowHeight * 0.04, 1 + windowWidth * 0.6 * this.reportInfo.type_5 * oneOfMax, windowHeight * 0.06)
+      ctx.setFillStyle('#000000')
+      ctx.setFontSize(windowWidth / 24)
+      ctx.setTextAlign('left')
+      ctx.fillText(this.reportInfo.type_5, windowWidth - 30, yOffset)
+      ctx.setFillStyle('#e65454')
+
+      yOffset += windowHeight * 0.08
+
+      //绘制第二段文本
+      let descArray = [];
+      //为了防止标题过长，分割字符串,每行18个
+      for (let i = 0; i < this.resultContentL.length / 28; i++) {
+          if (i > 2) {
+            descArray.push(this.resultContentL.substr(i * 26, 25) + '...');
+            break;
+          }
+          descArray.push(this.resultContentL.substr(i * 26, 26));
+      }
+
+      descArray.forEach(function (value) {
+        ctx.setFillStyle('#808080')
+        ctx.setFontSize(windowWidth / 28)
+        ctx.setTextAlign('left')
+        ctx.fillText(value, windowWidth / 32, yOffset)
+        yOffset += windowHeight * 0.035
+      });
+
+      ctx.draw();
+      wepy.hideLoading();
+    }
+
+    onReady() {
+      this.resultContentL = this.$parent.globalData.reportInfo.result
+      this.reportInfo = this.$parent.globalData.reportInfo
+      this.userInfo = this.$parent.globalData.userInfo
+    }
+
+  }
+</script>

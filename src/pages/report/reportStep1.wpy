@@ -1,0 +1,165 @@
+<style lang="less">
+  .container {
+    height: 100vh;
+  }
+
+  .report-bg {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .step1-bg {
+    width: 45%;
+    height: 60%;
+    position: fixed;
+    top: 20%;
+    bottom: 20%;
+    left: 50%;
+    z-index: 10;
+  }
+
+  .step1-content-box {
+    position: fixed;
+    top: 10%;
+    bottom: 10%;
+    left: 100rpx;
+    right: 200rpx;
+    z-index: 20;
+    background: -webkit-linear-gradient(left, #ff9999, #e65454); /* Safari 5.1 - 6.0 */
+    background: -o-linear-gradient(right, #ff9999, #e65454); /* Opera 11.1 - 12.0 */
+    background: -moz-linear-gradient(right, #ff9999, #e65454); /* Firefox 3.6 - 15 */
+    background: linear-gradient(to right, #ff9999, #e65454); /* 标准的语法 */
+  }
+
+  .step1-list-item {
+    position: fixed;
+    left: 50rpx;
+    right: 200rpx;
+    height: 100rpx;
+    z-index: 20;
+    display: flex;
+    line-height: 100rpx;
+  }
+
+  .step1-list-item-1 {
+    top: 25%;
+  }
+  .step1-list-item-2 {
+    top: 47%;
+  }
+  .step1-list-item-3 {
+    top: 70%;
+  }
+
+  .step1-list-item-icon-box {
+    border-radius: 130rpx;
+    background-color: #ffffff;
+    box-shadow: 0 0 10rpx #999999;
+  }
+  .step1-list-item-icon {
+    width: 60rpx;
+    height: 60rpx;
+    padding: 20rpx;
+  }
+  .step1-list-item-icon-2 {
+    width: 100rpx;
+    height: 100rpx;
+  }
+  .step1-list-item-detail {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 32rpx;
+    padding-left: 20rpx;
+    display: flex;
+  }
+  .step1-list-item-detail-import {
+    font-size: 46rpx;
+    font-weight: bolder;
+    text-decoration: underline;
+    padding-bottom:4rpx;
+    padding: 0 10rpx;
+  }
+  .step1-title {
+    position: fixed;
+    right: 100rpx;
+    width: 60rpx;
+    top: 35%;
+    bottom: 35%;
+    z-index: 20;
+    line-height:40rpx;
+    color: #cc3333;
+    font-weight: bolder;
+  }
+</style>
+<template>
+  <view class="container" @tap="gotoStep2">
+    <image class="report-bg" src="../../images/report_bg.jpg"/>
+    <image class="step1-bg" src="../../images/step1_bg.png"/>
+    <view class="step1-content-box"></view>
+    <view class="step1-title">①本次学习完成情况</view>
+    <view class="step1-list-item step1-list-item-1">
+      <view class="step1-list-item-icon-box" >
+        <image class="step1-list-item-icon" src="../../images/time.png" />
+      </view>
+      <view class="step1-list-item-detail">
+        您的学习时长：
+        <view class="step1-list-item-detail-import">{{userInfo.learn_time}}min</view>
+      </view>
+    </view>
+    <view class="step1-list-item step1-list-item-2">
+      <image class="step1-list-item-icon-2" src="../../images/qunti.png" />
+      <view class="step1-list-item-detail">
+        已超过
+        <view class="step1-list-item-detail-import">{{reportInfo.rate}}%</view>
+        的学员
+      </view>
+    </view>
+    <view class="step1-list-item step1-list-item-3">
+      <view class="step1-list-item-icon-box" >
+        <image class="step1-list-item-icon" src="../../images/timu.png" />
+      </view>
+      <view class="step1-list-item-detail">
+        完成题目：
+        <view class="step1-list-item-detail-import">{{reportInfo.sum}}道</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class ReportStep1 extends wepy.page {
+    config = {
+      navigationBarTitleText: '完成情况'
+    }
+    components = {
+    }
+
+    data = {
+      userInfo: null,
+      reportInfo: null,
+    }
+
+    methods = {
+      gotoStep2: function () {
+        wepy.navigateTo({
+          url: './reportStep2'
+        })
+      }
+    }
+
+    onLoad() {
+      if(this.$parent.globalData.userInfo) {
+        this.userInfo = this.$parent.globalData.userInfo
+        this.reportInfo = this.$parent.globalData.reportInfo
+        this.reportInfo.rate = (this.reportInfo.less_user / this.reportInfo.sum_user).toFixed(2) * 100
+      }
+    }
+  }
+</script>
